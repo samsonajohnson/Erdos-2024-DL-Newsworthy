@@ -1,0 +1,23 @@
+name: erdos_2024_dl_newsworthy
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.8,<3.12
+  - jupyter 
+  - jupyter-lsp
+  - numpy 
+  - pandas 
+  - matplotlib
+  - matplotlib-inline
+  - seaborn
+  - openpyxl
+  - pyarrow
+  - python-dateutil
+  - python-fastjsonschema
+  - python-flatbuffers
+  - python-json-logger
+  - python-tzdata
+  - pip
+  - pip:
+      - requests
+      - alpaca-py
