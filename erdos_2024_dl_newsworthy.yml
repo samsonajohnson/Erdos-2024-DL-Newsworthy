@@ -21,3 +21,5 @@ dependencies:
   - pip:
       - requests
       - alpaca-py
+      - transformers
+      - pytorch-lightning
