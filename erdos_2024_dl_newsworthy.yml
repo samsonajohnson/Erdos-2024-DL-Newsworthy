@@ -23,3 +23,4 @@ dependencies:
       - alpaca-py
       - transformers
       - pytorch-lightning
+      - openai
