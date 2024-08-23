@@ -73,7 +73,7 @@ def get_best_checkpoint(base_name="Run"):
 
     return best_checkpoint_path
 
-def prepare_data(seed=111333, use_small_subset=False):
+def prepare_data(seed=54, use_small_subset=False):
     dataset_openai = load_dataset('csv', data_files='news_openai_final.csv')
 
     # Split the dataset into train, validation, and test sets
@@ -81,16 +81,16 @@ def prepare_data(seed=111333, use_small_subset=False):
     train_val_split = train_val_test_split['train'].train_test_split(test_size=0.25, seed=seed)
 
     dataset = DatasetDict({
-        'train': train_val_split['train'].shuffle(seed=111333),  # 60% of the original data
-        'validation': train_val_split['test'].shuffle(seed=111333),  # 20% of the original data
-        'test': train_val_test_split['test'].shuffle(seed=111333),  # 20% of the original data
+        'train': train_val_split['train'].shuffle(seed=54),  # 60% of the original data
+        'validation': train_val_split['test'].shuffle(seed=54),  # 20% of the original data
+        'test': train_val_test_split['test'].shuffle(seed=54),  # 20% of the original data
     })
 
     if use_small_subset:
         # Randomly select a small subset of data
-        small_train_subset = dataset["train"].shuffle(seed=111333).select([i for i in list(range(1000))])
-        small_val_subset = dataset["validation"].shuffle(seed=111333).select([i for i in list(range(200))])
-        small_test_subset = dataset["test"].shuffle(seed=111333).select([i for i in list(range(200))])
+        small_train_subset = dataset["train"].shuffle(seed=54).select([i for i in list(range(1000))])
+        small_val_subset = dataset["validation"].shuffle(seed=54).select([i for i in list(range(200))])
+        small_test_subset = dataset["test"].shuffle(seed=54).select([i for i in list(range(200))])
 
         dataset = DatasetDict({
             'train': small_train_subset,
@@ -144,6 +144,10 @@ def train_model(dataset, logger, checkpoint_dir_run, huggingface_dir, finetune_f
         # model to train from scratch
         model = SentimentModel(config, reordered_class_weights)
 
+    # Unfreeze all layers (both for new model and fine-tuning)
+    for param in model.parameters():
+        param.requires_grad = True
+
     if not os.path.exists(checkpoint_dir_run):
         os.makedirs(checkpoint_dir_run)
         print(f"Directory '{checkpoint_dir_run}' created.")
@@ -153,7 +157,7 @@ def train_model(dataset, logger, checkpoint_dir_run, huggingface_dir, finetune_f
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         dirpath=checkpoint_dir_run,
-        filename='{epoch:02d}-{val_loss:.2f}',  # Filename includes epoch and validation loss
+        filename='{epoch:02d}-{val_loss:.5f}',  # Filename includes epoch and validation loss
         save_top_k=-1,  # Save all checkpoints (best and epoch checkpoints)
         monitor='val_loss',  # Monitor validation loss to determine the best model
         mode='min',  # Save the model with the minimum validation loss
@@ -194,6 +198,8 @@ def train_model(dataset, logger, checkpoint_dir_run, huggingface_dir, finetune_f
         if current_val_loss < best_val_loss:
             best_val_loss = current_val_loss
             best_lr = config['lr']
+        best_checkpoint_path = get_best_checkpoint(base_name="Run")
+        model = SentimentModel.load_from_checkpoint(best_checkpoint_path)
         model.save_pretrained(huggingface_dir)
         return model, data_module, best_lr, best_val_loss
     else:
@@ -270,7 +276,7 @@ def main():
     parser.add_argument('--name_suffix', type=str, default='', help='Additional suffix for the run name')
     args = parser.parse_args()
 
-    pl.seed_everything(111333, workers=True)
+    pl.seed_everything(54, workers=True)
 
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
 
