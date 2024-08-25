@@ -28,7 +28,7 @@ def _overall_sentiment(x: int):
 def separate_by_stock():
     # read in full data set
     #df = pd.read_csv('../data/complete_next_open.csv')
-    df = pd.read_csv('../data/news_frob_wprobs_e06_val_0_32016.csv')
+    df = pd.read_csv('../data/complete_next_open_frob.csv')
 
     df['Market Date'] = pd.to_datetime(df['Market Date'])
     # df = df.drop(df.loc[df['Market Date'] < datetime.datetime(2019,3,15)].index)
