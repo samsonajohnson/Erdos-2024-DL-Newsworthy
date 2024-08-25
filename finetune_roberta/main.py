@@ -73,7 +73,7 @@ def get_best_checkpoint(base_name="Run"):
 
     return best_checkpoint_path
 
-def prepare_data(seed=54, use_small_subset=False):
+def prepare_data(seed=1122456, use_small_subset=False):
     dataset_openai = load_dataset('csv', data_files='news_openai_final.csv')
 
     # Split the dataset into train, validation, and test sets
@@ -81,16 +81,16 @@ def prepare_data(seed=54, use_small_subset=False):
     train_val_split = train_val_test_split['train'].train_test_split(test_size=0.25, seed=seed)
 
     dataset = DatasetDict({
-        'train': train_val_split['train'].shuffle(seed=54),  # 60% of the original data
-        'validation': train_val_split['test'].shuffle(seed=54),  # 20% of the original data
-        'test': train_val_test_split['test'].shuffle(seed=54),  # 20% of the original data
+        'train': train_val_split['train'].shuffle(seed=1122456),  # 60% of the original data
+        'validation': train_val_split['test'].shuffle(seed=1122456),  # 20% of the original data
+        'test': train_val_test_split['test'].shuffle(seed=1122456),  # 20% of the original data
     })
 
     if use_small_subset:
         # Randomly select a small subset of data
-        small_train_subset = dataset["train"].shuffle(seed=54).select([i for i in list(range(1000))])
-        small_val_subset = dataset["validation"].shuffle(seed=54).select([i for i in list(range(200))])
-        small_test_subset = dataset["test"].shuffle(seed=54).select([i for i in list(range(200))])
+        small_train_subset = dataset["train"].shuffle(seed=1122456).select([i for i in list(range(1000))])
+        small_val_subset = dataset["validation"].shuffle(seed=1122456).select([i for i in list(range(200))])
+        small_test_subset = dataset["test"].shuffle(seed=1122456).select([i for i in list(range(200))])
 
         dataset = DatasetDict({
             'train': small_train_subset,
@@ -112,7 +112,7 @@ def train_model(dataset, logger, checkpoint_dir_run, huggingface_dir, finetune_f
         'warmup': 0.2, 
         'train_size': len(data_module.train_dataloader()),
         'weight_decay': 0.001,
-        'n_epochs': 30 #25 #100
+        'n_epochs': 20 #25 #100
     }
 
     labels = dataset['train']['openai_sentiment']
@@ -276,7 +276,7 @@ def main():
     parser.add_argument('--name_suffix', type=str, default='', help='Additional suffix for the run name')
     args = parser.parse_args()
 
-    pl.seed_everything(54, workers=True)
+    pl.seed_everything(1122456, workers=True)
 
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
 

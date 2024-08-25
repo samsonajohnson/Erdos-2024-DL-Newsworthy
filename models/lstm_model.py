@@ -2,10 +2,11 @@
 # The only claim to authorship is to the use case for which it is now being applied
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
+import keras
+import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
-import keras
 from math import sqrt
 #from matplotlib import pyplot
 import numpy as np
@@ -15,6 +16,7 @@ def inverse_difference(history, yhat, interval=1):
     return yhat + history[-interval]
  
 # fit an LSTM network to training data
+'''
 def fit_lstm(X, y, batch_size, nb_epoch, neurons):
     keras.backend.clear_session()
     X = X.reshape(X.shape[0], 1, X.shape[1])
@@ -26,7 +28,47 @@ def fit_lstm(X, y, batch_size, nb_epoch, neurons):
         model.fit(X, y, epochs=1, batch_size=batch_size, verbose=1, shuffle=False)
         model.reset_states()
     return model
- 
+
+def fit_lstm(X, y, batch_size, nb_epoch, neurons):
+    keras.backend.clear_session()  # Clear any previous models in the backend
+
+    # Reshape input to be [samples, time steps, features]
+    X = X.reshape(X.shape[0], 1, X.shape[1])
+    
+    model = Sequential()
+    
+    # Change batch_input_shape to input_shape
+    model.add(LSTM(neurons, input_shape=(1, X.shape[2]), stateful=True, batch_size=batch_size))
+    
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error', optimizer='adam')
+
+    # Train the model with stateful LSTM
+    for i in range(nb_epoch):
+        model.fit(X, y, epochs=1, batch_size=batch_size, verbose=1, shuffle=False)
+        model.reset_states()
+
+    return model
+'''
+def fit_lstm(X, y, batch_size, nb_epoch, neurons):
+    keras.backend.clear_session()  # Clear any previous models in the backend
+
+    # Reshape input to be [samples, time steps, features]
+    X = X.reshape(X.shape[0], 1, X.shape[1])
+    
+    model = Sequential()
+    
+    # Define LSTM layer without stateful and batch_input_shape
+    model.add(LSTM(neurons, input_shape=(1, X.shape[2])))  # Stateful is removed
+    
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error', optimizer='adam')
+
+    # Train the model
+    model.fit(X, y, epochs=nb_epoch, batch_size=batch_size, verbose=1, shuffle=False)
+
+    return model
+
 # make a one-step forecast
 def forecast_lstm(model, batch_size, X):
     X = X.reshape(1, 1, len(X))
@@ -36,6 +78,44 @@ def forecast_lstm(model, batch_size, X):
 # takes in train and test dataframes with appropriate columns
 # fits the lstm model and makes predictions on the test set
 # returns both the betting strategy and the predicted change in price
+def run_lstm_model(train, test, epochs=10, neurons=3):
+    X, y = train.drop(columns=['y']).values, train.y.values
+    X_test, y_test = test.drop(columns=['y']).values, test.y.values
+
+    scaler_X = MinMaxScaler(feature_range=(-1,1))
+    scaler_y = MinMaxScaler(feature_range=(-1,1))
+
+    # Scale all features to be between -1 and 1
+    X = scaler_X.fit_transform(X)
+    y = scaler_y.fit_transform(y.reshape(-1,1)).reshape(-1,)
+
+    X_test = scaler_X.transform(X_test)
+
+    # Set the batch size
+    batch_size = 1
+
+    model = fit_lstm(X, y, batch_size, epochs, neurons)
+
+    # Forecast the entire training dataset
+    X_reshaped = X.reshape(X.shape[0], 1, X.shape[1])
+    model.predict(X_reshaped, batch_size=batch_size)
+
+    # Walk-forward validation on the test data
+    predictions = []
+    for i in range(X_test.shape[0]):
+        # Make one-step forecast
+        yhat = forecast_lstm(model, batch_size, X_test[i,:])
+        # Invert scaling
+        yhat = scaler_y.inverse_transform(np.array([yhat]).reshape(1,1))[0,0]
+        predictions.append(yhat)
+
+    # Report performance
+    rmse = sqrt(mean_squared_error(y_test, predictions))
+    print('Test RMSE: %.3f' % rmse)
+
+    return predictions, predictions/np.abs(predictions)
+
+'''
 def run_lstm_model(train, test, epochs=10, neurons=3):
     X, y = train.drop(columns=['y']).values, train.y.values
 
@@ -79,3 +159,4 @@ def run_lstm_model(train, test, epochs=10, neurons=3):
     #pyplot.plot(raw_values[-12:])
     #pyplot.plot(predictions)
     #pyplot.show()
+'''

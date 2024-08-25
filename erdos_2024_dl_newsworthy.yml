@@ -19,6 +19,9 @@ dependencies:
   - python-flatbuffers
   - python-json-logger
   - python-tzdata
+  - xgboost
+  - tensorflow-base
+  - tensorflow-estimator
   - pip
   - pip:
       - requests
@@ -31,3 +34,5 @@ dependencies:
       - git-lfs
       - tensorboard
       - ipywidgets
+      - tensorflow
+      - keras
