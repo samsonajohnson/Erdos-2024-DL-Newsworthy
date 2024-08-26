@@ -5,11 +5,13 @@ dependencies:
   - python>=3.8,<3.12
   - jupyter 
   - jupyter-lsp
-  - numpy 
+  - numpy==1.24.4
   - pandas 
   - matplotlib
   - matplotlib-inline
+  - nltk
   - seaborn
+  - scikit-learn
   - openpyxl
   - pyarrow
   - python-dateutil
@@ -17,6 +19,9 @@ dependencies:
   - python-flatbuffers
   - python-json-logger
   - python-tzdata
+  - xgboost
+  - tensorflow-base
+  - tensorflow-estimator
   - pip
   - pip:
       - requests
@@ -24,3 +29,10 @@ dependencies:
       - transformers
       - pytorch-lightning
       - openai
+      - datasets
+      - huggingface_hub
+      - git-lfs
+      - tensorboard
+      - ipywidgets
+      - tensorflow
+      - keras

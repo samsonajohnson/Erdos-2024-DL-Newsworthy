@@ -4,6 +4,7 @@ import pandas as pd
 import datetime
 
 # determines if the sentiment of an article is positive, negative, or neutral
+'''
 def _overall_sentiment(x:int):
     threshold = .1
     if x > threshold:
@@ -12,28 +13,45 @@ def _overall_sentiment(x:int):
         return 'neg'
     else:
         return 'neu'
+'''
+
+def _overall_sentiment(x: int):
+    if x == 1.0:
+        return 'pos'
+    elif x == -1.0:
+        return 'neg'
+    elif x == 0.0:
+        return 'neu'
+
 
 # reads from the complete.csv file and returns a dictionary of dataframes where the keys are the tickers
 def separate_by_stock():
     # read in full data set
-    df = pd.read_csv('../data/complete_next_open.csv')
+    #df = pd.read_csv('../data/complete_next_open.csv')
+    df = pd.read_csv('../data/complete_next_open_frob.csv')
 
     df['Market Date'] = pd.to_datetime(df['Market Date'])
     # df = df.drop(df.loc[df['Market Date'] < datetime.datetime(2019,3,15)].index)
 
     # create overall sentiment column
-    df['overall_sen'] = df['finvader_tot'].apply(_overall_sentiment)
+    df['overall_sen'] = df['frob_sentiment'].apply(_overall_sentiment)
     df['overall_sen'] = df['overall_sen'].astype('category')
-
+    #print("df with overall_sen", df)
     # value counts for overall sentiment by market date and ticker
     counts = df.groupby(['Market Date', 'Ticker'])['overall_sen'].value_counts()
 
     # we will take the mean of each of these features
-    features = ['finvader_neg',
-            'finvader_neu',
-            'finvader_pos',
-            'finvader_tot',
-            'Open',
+    features = [#'finvader_neg',
+            #'finvader_neu',
+            #'finvader_pos',
+            #'finvader_tot',
+            #'openai_sentiment',
+            #'openai_score',
+            'frob_neg',
+            'frob_neu',
+            'frob_pos',
+            'frob_comp',
+            'Open'
             # 'High',
             # 'Low',
             # 'Close',
@@ -46,18 +64,21 @@ def separate_by_stock():
     # add in the article counts to the df_mean dataframe
     labels = {'pos_art_count':'pos', 'neg_art_count':'neg', 'neu_art_count':'neu'}
     for l in labels:
-        df_mean[l] = df_mean.apply(lambda x: counts.loc[x['Market Date'], x['Ticker']][labels[l]], axis = 1)
-    df_mean.loc[df_mean['finvader_tot'].isna(), 'neu_art_count'] = 0
+        df_mean[l] = df_mean.apply(lambda x:  counts.loc[x['Market Date'], x['Ticker']][labels[l]], axis = 1)
+    df_mean.loc[df_mean['frob_comp'].isna(), 'neu_art_count'] = 0
     df_mean['total_articles'] = df_mean['pos_art_count'] + df_mean['neg_art_count'] + df_mean['neu_art_count']
+    
+    #print("df_mean", df_mean)
+    #for l in labels:
+    #    df_mean[l] = df_mean.apply(lambda x: counts.loc[x['Market Date'], x['Ticker']][labels[l]], axis = 1)
+    #df_mean.loc[df_mean['finvader_tot'].isna(), 'neu_art_count'] = 0
+    #df_mean['total_articles'] = df_mean['pos_art_count'] + df_mean['neg_art_count'] + df_mean['neu_art_count']
 
     # change market date to datetime format
     #df_mean['Market Date'] = pd.to_datetime(df_mean['Market Date'])
 
-
-
-
     tickers = df_mean['Ticker'].unique()
-
+    #print(tickers)
     # create dictionary of data frames, one for each ticker
     ticker_frames = {}
     for tick in tickers:
